@@ -1,58 +1,61 @@
-import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpExchange;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
+import com.sun.net.httpserver.*;
+import java.io.*;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
+import java.util.*;
 
-public class MessageHttpServer {
-    public static void main(String[] args) throws IOException {
-        int port = 12345;
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+public class BroadcastServer {
+    private static List<String> messages = Collections.synchronizedList(new ArrayList<>());
 
-        // Root handler
-        server.createContext("/", exchange -> {
-            String response = "Server is running!";
-            exchange.sendResponseHeaders(200, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
+    public static void main(String[] args) throws Exception {
+        int port = 8080;
+        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
+
+        // Handle sending a new message
+        server.createContext("/message", exchange -> {
+            if ("POST".equals(exchange.getRequestMethod())) {
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(exchange.getRequestBody(), "UTF-8"));
+                StringBuilder body = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    body.append(line);
+                }
+                reader.close();
+
+                String msg = body.toString();
+                messages.add(msg);
+                System.out.println(msg); // print to server console
+
+                String response = "Message received!";
+                exchange.sendResponseHeaders(200, response.length());
+                OutputStream os = exchange.getResponseBody();
                 os.write(response.getBytes());
+                os.close();
+            } else {
+                exchange.sendResponseHeaders(405, -1);
             }
         });
 
-        // Message handler
-        server.createContext("/message", new MessageHandler());
+        // Handle fetching all messages
+        server.createContext("/fetch", exchange -> {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                StringBuilder response = new StringBuilder();
+                synchronized (messages) {
+                    for (String msg : messages) {
+                        response.append(msg).append("\n");
+                    }
+                }
+                exchange.sendResponseHeaders(200, response.toString().getBytes("UTF-8").length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.toString().getBytes("UTF-8"));
+                os.close();
+            } else {
+                exchange.sendResponseHeaders(405, -1);
+            }
+        });
 
         server.setExecutor(null);
         server.start();
-        System.out.println("HTTP server running on port " + port);
-    }
-
-    static class MessageHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            if ("POST".equals(exchange.getRequestMethod())) {
-                InputStream is = exchange.getRequestBody();
-                String message = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-
-                // ✅ Print message on server console
-                System.out.println("Client says: " + message);
-
-                // Reply just to confirm receipt
-                String response = "Message received on server!";
-                exchange.sendResponseHeaders(200, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                }
-            } else {
-                String response = "Send a POST request with your message.";
-                exchange.sendResponseHeaders(405, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                }
-            }
-        }
+        System.out.println("Broadcast server running on port " + port);
     }
 }
