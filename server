@@ -1,0 +1,58 @@
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+
+public class MessageHttpServer {
+    public static void main(String[] args) throws IOException {
+        int port = 12345;
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+
+        // Root handler
+        server.createContext("/", exchange -> {
+            String response = "Server is running!";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response.getBytes());
+            }
+        });
+
+        // Message handler
+        server.createContext("/message", new MessageHandler());
+
+        server.setExecutor(null);
+        server.start();
+        System.out.println("HTTP server running on port " + port);
+    }
+
+    static class MessageHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("POST".equals(exchange.getRequestMethod())) {
+                InputStream is = exchange.getRequestBody();
+                String message = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+
+                // ✅ Print message on server console
+                System.out.println("Client says: " + message);
+
+                // Reply just to confirm receipt
+                String response = "Message received on server!";
+                exchange.sendResponseHeaders(200, response.length());
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
+            } else {
+                String response = "Send a POST request with your message.";
+                exchange.sendResponseHeaders(405, response.length());
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
+            }
+        }
+    }
+}
