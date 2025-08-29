@@ -2,14 +2,14 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class BroadcastClient {
+public class Client {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter your username: ");
         String username = scanner.nextLine();
 
-        String postUrl = "https://<your-codespace-id>-8080.app.github.dev/message";
-        String fetchUrl = "https://<your-codespace-id>-8080.app.github.dev/fetch";
+        String postUrl = "https://friendly-pancake-pj9g79549xpw367w6-8080.app.github.dev/message";
+        String fetchUrl = "https://friendly-pancake-pj9g79549xpw367w6-8080.app.github.dev/fetch";
 
         // Start a thread to poll messages every 2 seconds
         new Thread(() -> {
