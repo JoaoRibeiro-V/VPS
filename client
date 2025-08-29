@@ -1,0 +1,52 @@
+import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+
+public class InteractiveHttpClient {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Replace with your ngrok URL
+        String url = "https://abcd-1234.ngrok-free.app/message";
+
+        while (true) {
+            try {
+                System.out.print("Enter a message (or 'exit' to quit): ");
+                String message = scanner.nextLine();
+
+                if (message.equalsIgnoreCase("exit")) {
+                    System.out.println("Exiting client...");
+                    break;
+                }
+
+                HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+                con.setRequestMethod("POST");
+                con.setDoOutput(true);
+
+                // Send message
+                try (OutputStream os = con.getOutputStream()) {
+                    os.write(message.getBytes());
+                }
+
+                // Read response
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = in.readLine()) != null) {
+                    response.append(line);
+                }
+                in.close();
+
+                System.out.println("Server replied: " + response);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        scanner.close();
+    }
+}
