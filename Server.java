@@ -24,7 +24,7 @@ public class Server {
 
                 String msg = body.toString();
                 messages.add(msg);
-                System.out.println(msg); // print to server console
+                System.out.println(msg + exchange.getLocalAddress().toString()); // print to server console
 
                 String response = "Message received!";
                 exchange.sendResponseHeaders(200, response.length());

@@ -36,7 +36,7 @@ public class Client {
                         }
                     }
                     in.close();
-                    Thread.sleep(2000);
+                    Thread.sleep(100);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
