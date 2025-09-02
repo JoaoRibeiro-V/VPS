@@ -3,20 +3,27 @@ import java.net.*;
 import java.util.*;
 
 public class Client {
+    public static boolean isLogado = true;
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter your username: ");
+	System.out.println();
+	System.out.println("Bem vindo ao simulador P2P, envie EXIT a qualquer momento para desconectar: ");
+	System.out.println();
+
+        System.out.print("Digite seu nickname: ");
         String username = scanner.nextLine();
 
+	System.out.println();
+	System.out.println("Bem vindo, converse com usuarios logados no chat:");
         String postUrl = "https://friendly-pancake-pj9g79549xpw367w6-8080.app.github.dev/message";
         String fetchUrl = "https://friendly-pancake-pj9g79549xpw367w6-8080.app.github.dev/fetch";
 
-        // Start a thread to poll messages every 2 seconds
         new Thread(() -> {
             Set<String> seen = new HashSet<>();
             while (true) {
+		if(isLogado != true){break;}
                 try {
-                    URL url = new URL(fetchUrl);
+                    URL url = URI.create(fetchUrl).toURL();
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     BufferedReader in = new BufferedReader(
@@ -36,14 +43,14 @@ public class Client {
             }
         }).start();
 
-        // Main loop to send messages
         while (true) {
-            System.out.print("Enter message (or 'exit' to quit): ");
             String msg = scanner.nextLine();
-            if ("exit".equalsIgnoreCase(msg)) break;
-
+            if ("exit".equalsIgnoreCase(msg)){
+		isLogado = false;
+		break;
+		};
             try {
-                URL url = new URL(postUrl);
+                URL url = URI.create(postUrl).toURL();
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);
@@ -53,7 +60,7 @@ public class Client {
                     os.write(formatted.getBytes("UTF-8"));
                 }
 
-                conn.getInputStream().close(); // just to complete the request
+                conn.getInputStream().close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
