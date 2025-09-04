@@ -10,7 +10,6 @@ public class Server {
         int port = 8080;
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
 
-        // Handle sending a new message
         server.createContext("/message", exchange -> {
             if ("POST".equals(exchange.getRequestMethod())) {
                 BufferedReader reader = new BufferedReader(
@@ -36,7 +35,6 @@ public class Server {
             }
         });
 
-        // Handle fetching all messages
         server.createContext("/fetch", exchange -> {
             if ("GET".equals(exchange.getRequestMethod())) {
                 StringBuilder response = new StringBuilder();
